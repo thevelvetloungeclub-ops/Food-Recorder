@@ -420,11 +420,9 @@ cameraInput.addEventListener(
 
 render();
 
-startFoodFirebase();
-
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
-    .register('./service-worker.js')
+    .register('./service-worker.js?v=4')
     .catch(() => {});
 }
 
@@ -785,3 +783,7 @@ function startFoodFirebase() {
   }
 }
 
+
+
+/* FOOD RECORDER FIREBASE START V4 */
+startFoodFirebase();
