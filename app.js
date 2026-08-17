@@ -165,14 +165,22 @@ function render() {
       'click',
       function () {
 
+        const deletedId =
+          button.dataset.id;
+
         entries =
           entries.filter(
             item =>
               item.id !==
-              button.dataset.id
+              deletedId
           );
 
         saveEntries();
+
+        removeSyncedFoodEntry(
+          deletedId
+        );
+
         render();
 
       }
@@ -272,6 +280,8 @@ document.getElementById(
     });
 
     saveEntries();
+
+    syncFoodEntries();
 
     description.value = '';
     calories.value = '';
@@ -410,8 +420,368 @@ cameraInput.addEventListener(
 
 render();
 
+startFoodFirebase();
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
     .register('./service-worker.js')
     .catch(() => {});
 }
+
+
+/* -------------------------
+   FIREBASE FOOD SYNC
+-------------------------- */
+
+const firebaseConfig = {
+  apiKey:
+    "AIzaSyANLPpaiqf2I6J9F9uwl6FqiVky3fVIgB8",
+  authDomain:
+    "food-recorder-sync.firebaseapp.com",
+  databaseURL:
+    "https://food-recorder-sync-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:
+    "food-recorder-sync",
+  storageBucket:
+    "food-recorder-sync.firebasestorage.app",
+  messagingSenderId:
+    "677914885520",
+  appId:
+    "1:677914885520:web:b9401754f77f6d49b2c715"
+};
+
+let foodSyncUser = null;
+
+function addFoodSyncControls() {
+
+  if (
+    document.getElementById(
+      'foodSyncPanel'
+    )
+  ) {
+    return;
+  }
+
+  const app =
+    document.querySelector('.app');
+
+  if (!app) {
+    return;
+  }
+
+  const panel =
+    document.createElement('div');
+
+  panel.id =
+    'foodSyncPanel';
+
+  panel.className =
+    'panel';
+
+  panel.innerHTML = `
+    <div style="text-align:center;">
+      <strong>
+        My Health Analyser Sync
+      </strong>
+
+      <p
+        id="foodSyncStatus"
+        class="note"
+        style="margin-bottom:12px;"
+      >
+        Not connected
+      </p>
+
+      <button
+        id="foodGoogleConnectBtn"
+        type="button"
+      >
+        Connect with Google
+      </button>
+    </div>
+  `;
+
+  const totalCard =
+    document.querySelector(
+      '.total-card'
+    );
+
+  if (totalCard) {
+    totalCard.insertAdjacentElement(
+      'afterend',
+      panel
+    );
+  } else {
+    app.prepend(panel);
+  }
+
+  document
+    .getElementById(
+      'foodGoogleConnectBtn'
+    )
+    .addEventListener(
+      'click',
+      connectFoodGoogle
+    );
+}
+
+
+function setFoodSyncStatus(message) {
+
+  const status =
+    document.getElementById(
+      'foodSyncStatus'
+    );
+
+  if (status) {
+    status.textContent =
+      message;
+  }
+}
+
+
+async function connectFoodGoogle() {
+
+  try {
+
+    const provider =
+      new firebase.auth
+        .GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+
+    await firebase
+      .auth()
+      .signInWithPopup(
+        provider
+      );
+
+  } catch (error) {
+
+    console.error(
+      'Google sign-in failed:',
+      error
+    );
+
+    setFoodSyncStatus(
+      'Could not connect to Google.'
+    );
+
+    alert(
+      'Google sign-in did not complete. Please try again.'
+    );
+
+  }
+}
+
+
+async function syncFoodEntries() {
+
+  if (!foodSyncUser) {
+    return;
+  }
+
+  const uid =
+    foodSyncUser.uid;
+
+  const unsynced =
+    entries.filter(
+      item => !item.synced
+    );
+
+  if (!unsynced.length) {
+
+    setFoodSyncStatus(
+      'Connected · everything is synced'
+    );
+
+    return;
+  }
+
+  setFoodSyncStatus(
+    'Connected · syncing...'
+  );
+
+  for (const item of unsynced) {
+
+    try {
+
+      await firebase
+        .database()
+        .ref(
+          'users/' +
+          uid +
+          '/foodEntries/' +
+          item.id
+        )
+        .set({
+          id:
+            item.id,
+          description:
+            item.description,
+          calories:
+            Number(
+              item.calories || 0
+            ),
+          meal:
+            item.meal || '',
+          date:
+            item.date || '',
+          created:
+            item.created || '',
+          updated:
+            new Date()
+              .toISOString()
+        });
+
+      item.synced =
+        true;
+
+    } catch (error) {
+
+      console.error(
+        'Food sync failed:',
+        error
+      );
+
+      setFoodSyncStatus(
+        'Connected · sync waiting'
+      );
+
+      saveEntries();
+      return;
+    }
+
+  }
+
+  saveEntries();
+
+  setFoodSyncStatus(
+    'Connected · everything is synced'
+  );
+}
+
+
+async function removeSyncedFoodEntry(
+  entryId
+) {
+
+  if (
+    !foodSyncUser ||
+    !entryId
+  ) {
+    return;
+  }
+
+  try {
+
+    await firebase
+      .database()
+      .ref(
+        'users/' +
+        foodSyncUser.uid +
+        '/foodEntries/' +
+        entryId
+      )
+      .remove();
+
+  } catch (error) {
+
+    console.error(
+      'Remote delete failed:',
+      error
+    );
+
+  }
+}
+
+
+function startFoodFirebase() {
+
+  addFoodSyncControls();
+
+  try {
+
+    if (!firebase.apps.length) {
+
+      firebase.initializeApp(
+        firebaseConfig
+      );
+
+    }
+
+    firebase
+      .auth()
+      .setPersistence(
+        firebase.auth
+          .Auth.Persistence.LOCAL
+      )
+      .catch(
+        error =>
+          console.error(
+            'Auth persistence:',
+            error
+          )
+      );
+
+    firebase
+      .auth()
+      .onAuthStateChanged(
+        async user => {
+
+          foodSyncUser =
+            user || null;
+
+          const button =
+            document.getElementById(
+              'foodGoogleConnectBtn'
+            );
+
+          if (!user) {
+
+            setFoodSyncStatus(
+              'Not connected'
+            );
+
+            if (button) {
+              button.style.display =
+                '';
+            }
+
+            return;
+          }
+
+          if (button) {
+            button.style.display =
+              'none';
+          }
+
+          setFoodSyncStatus(
+            'Connected as ' +
+            (
+              user.email ||
+              'Google user'
+            )
+          );
+
+          await syncFoodEntries();
+
+        }
+      );
+
+  } catch (error) {
+
+    console.error(
+      'Firebase startup failed:',
+      error
+    );
+
+    setFoodSyncStatus(
+      'Sync unavailable'
+    );
+
+  }
+}
+
