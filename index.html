@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Food Recorder</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f7;
+      color: #172126;
+    }
+
+    .app {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    h1 {
+      margin-top: 8px;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .sub {
+      text-align: center;
+      color: #66757c;
+      margin-bottom: 20px;
+    }
+
+    .total-card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      text-align: center;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .total-card span {
+      display: block;
+      color: #66757c;
+    }
+
+    .total-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 38px;
+    }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #24343b;
+      color: white;
+    }
+
+    button.secondary {
+      background: #dfe6e9;
+      color: #172126;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid #cfd8dc;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 17px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .entry {
+      border-top: 1px solid #e5eaec;
+      padding: 12px 0;
+    }
+
+    .entry:first-child {
+      border-top: 0;
+    }
+
+    .entry-title {
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .entry-meta {
+      margin-top: 4px;
+      color: #66757c;
+      font-size: 14px;
+    }
+
+    .delete {
+      margin-top: 8px;
+      background: #eceff1;
+      color: #172126;
+      padding: 9px 12px;
+      font-size: 14px;
+      width: auto;
+    }
+
+    .note {
+      color: #66757c;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    #cameraInput {
+      display: none;
+    }
+
+    @media (max-width: 500px) {
+      .app {
+        padding: 12px;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        min-height: 62px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <h1>Food Recorder</h1>
+  <div class="sub">Quick food & drink diary</div>
+
+  <div class="total-card">
+    <span>Today's estimated calories</span>
+    <strong id="todayTotal">0 kcal</strong>
+  </div>
+
+  <div class="actions">
+
+    <button id="photoBtn">
+      📷 Take Photo
+    </button>
+
+    <button id="voiceBtn">
+      🎤 Say What I Ate
+    </button>
+
+    <button id="typeBtn">
+      ⌨️ Type What I Ate
+    </button>
+
+  </div>
+
+  <input
+    id="cameraInput"
+    type="file"
+    accept="image/*"
+    capture="environment"
+  >
+
+  <div class="panel" id="entryPanel">
+
+    <label for="description">
+      What did you have?
+    </label>
+
+    <input
+      id="description"
+      type="text"
+      placeholder="e.g. cheese sandwich, 2 cans of beer"
+    >
+
+    <div class="row">
+
+      <div>
+        <label for="meal">
+          Meal / time
+        </label>
+
+        <select id="meal">
+          <option>Breakfast</option>
+          <option>Lunch</option>
+          <option>Dinner</option>
+          <option>Snack</option>
+          <option>Drink</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="calories">
+          Calories
+        </label>
+
+        <input
+          id="calories"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="Estimate"
+        >
+      </div>
+
+    </div>
+
+    <button id="estimateBtn" style="margin-top:14px;">
+      Estimate Calories
+    </button>
+
+    <button id="saveBtn" class="secondary" style="margin-top:10px;">
+      Save Entry
+    </button>
+
+    <p class="note" id="estimateNote">
+      Estimates are approximate.
+    </p>
+
+  </div>
+
+  <div class="panel">
+    <h2>Today</h2>
+    <div id="todayEntries">
+      <p class="note">No entries yet.</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
