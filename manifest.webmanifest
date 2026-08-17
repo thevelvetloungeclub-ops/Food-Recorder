@@ -1,7 +1,7 @@
 {
   "name": "Food Recorder",
   "short_name": "Food Recorder",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f6f7",
   "theme_color": "#24343b",

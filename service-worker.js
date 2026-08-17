@@ -2,10 +2,10 @@ const CACHE =
   'food-recorder-v1';
 
 const FILES = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/manifest.webmanifest'
+  './',
+  './index.html',
+  './app.js',
+  './manifest.webmanifest'
 ];
 
 self.addEventListener(
