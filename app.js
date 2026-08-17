@@ -552,7 +552,7 @@ async function connectFoodGoogle() {
 
     await firebase
       .auth()
-      .signInWithPopup(
+      .signInWithRedirect(
         provider
       );
 

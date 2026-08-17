@@ -1,5 +1,5 @@
 const CACHE =
-  'food-recorder-v4';
+  'food-recorder-v5';
 
 const FILES = [
   './',
